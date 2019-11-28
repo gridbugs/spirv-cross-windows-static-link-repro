@@ -1,0 +1,98 @@
+version: '{build}'
+clone_depth: 1
+image:
+  - Visual Studio 2015
+environment:
+  matrix:
+    - CRT_LINK: dynamic
+      MODE: debug
+      ABI: gnu
+
+    - CRT_LINK: static
+      MODE: debug
+      ABI: gnu
+
+    - CRT_LINK: dynamic
+      MODE: debug
+      ABI: msvc
+
+    - CRT_LINK: static
+      MODE: debug
+      ABI: msvc
+
+    - CRT_LINK: dynamic
+      MODE: release
+      ABI: gnu
+
+    - CRT_LINK: static
+      MODE: release
+      ABI: gnu
+
+    - CRT_LINK: dynamic
+      MODE: release
+      ABI: msvc
+
+    - CRT_LINK: static
+      MODE: release
+      ABI: msvc
+
+install:
+  - cmd: >-
+      appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
+
+      rustup-init -yv --default-toolchain stable --default-host x86_64-pc-windows-%ABI%
+
+      set PATH=%PATH%;%USERPROFILE%\.cargo\bin
+
+      set PATH=%PATH%;C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin
+
+      rustc -V
+
+      cargo -V
+
+      g++ --version
+
+for:
+  -
+    matrix:
+      only:
+        - CRT_LINK: dynamic
+          MODE: debug
+    build_script:
+      - cmd: >-
+          cargo rustc
+  -
+    matrix:
+      only:
+        - CRT_LINK: static
+          MODE: debug
+    build_script:
+      - cmd: >-
+          cargo rustc -- -Ctarget-feature=+crt-static
+  -
+    matrix:
+      only:
+        - CRT_LINK: dynamic
+          MODE: release
+    build_script:
+      - cmd: >-
+          cargo rustc --release
+  -
+    matrix:
+      only:
+        - CRT_LINK: static
+          MODE: release
+    build_script:
+      - cmd: >-
+          cargo rustc --release -- -Ctarget-feature=+crt-static
+
+after_build:
+  - cmd: >-
+      mkdir tmp
+
+      copy target\%MODE%\spirv-cross-windos-static-link-repro.exe tmp\%ABI%-%CRT_LINK%-%MODE%.exe
+
+      powershell.exe -nologo -noprofile -command "& { Add-Type -A 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::CreateFromDirectory('tmp', '%ABI%-%CRT_LINK%-%MODE%.zip'); }"
+
+artifacts:
+- path: "%ABI%-%CRT_LINK%-%MODE%.zip"
