@@ -90,7 +90,7 @@ after_build:
   - cmd: >-
       mkdir tmp
 
-      copy target\%MODE%\spirv-cross-windos-static-link-repro.exe tmp\%ABI%-%CRT_LINK%-%MODE%.exe
+      copy target\%MODE%\spirv-cross-windows-static-link-repro.exe tmp\%ABI%-%CRT_LINK%-%MODE%.exe
 
       powershell.exe -nologo -noprofile -command "& { Add-Type -A 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::CreateFromDirectory('tmp', '%ABI%-%CRT_LINK%-%MODE%.zip'); }"
 
